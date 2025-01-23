@@ -1,6 +1,10 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import Carrusel  from '@/Components';
+import Carrusel from '@/Components/Carusel-horizontal.vue';
+import Carrusel2 from '@/Components/Carusel-alrededor.vue';
+import Carrusel3 from '@/Components/Carusel-vertical.vue';
+import Carrusel4 from '@/Components/carusel-automatico.vue';
+import Carrusel5 from '@/Components/Carusel-galeria.vue';
 import { Head } from '@inertiajs/vue3';
 </script>
 
@@ -21,9 +25,11 @@ import { Head } from '@inertiajs/vue3';
                 <div
                     class="overflow-hidden bg-white shadow-sm sm:rounded-lg"
                 >
-                    <div class="p-6 text-gray-900">
-                        You're logged in!
-                    </div>
+                   <Carrusel></Carrusel>
+                   <Carrusel2></Carrusel2>
+                   <Carrusel3></Carrusel3>
+                   <Carrusel4></Carrusel4>
+                   <Carrusel5></Carrusel5>
                 </div>
             </div>
         </div>
