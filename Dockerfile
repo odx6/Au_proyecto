@@ -15,6 +15,9 @@ COPY . .
 
 # Instalar dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
+RUN npm install && npm run production
+
+
 
 # Asignar permisos a storage y bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
