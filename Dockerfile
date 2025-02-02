@@ -15,8 +15,7 @@ COPY . .
 
 # Instalar dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
-RUN npm install && npm run production
-
+RUN npm install 
 
 
 # Asignar permisos a storage y bootstrap/cache
