@@ -33,7 +33,7 @@ RUN npm install
 
 # Exponer puertos (Laravel en 9000, MySQL en 3306)
 EXPOSE 9000
-EXPOSE 3306
+
 
 # Comando por defecto
 CMD ["php-fpm"]
