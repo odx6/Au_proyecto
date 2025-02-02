@@ -1,25 +1,40 @@
-# Usar la imagen oficial de PHP con Apache
-FROM php:8.2-apache
+# Imagen base de PHP con Apache
+FROM php:8.1-apache
 
-# Instalar extensiones de PHP y dependencias
+# Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
-    libpng-dev libjpeg-dev libfreetype6-dev zip unzip git curl \
-    && docker-php-ext-install pdo pdo_mysql gd
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zip \
+    git \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd \
+    && docker-php-ext-install pdo pdo_mysql
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copiar archivos de Laravel al contenedor
+# Configuración de Apache
+COPY ./config/vhost.conf /etc/apache2/sites-available/000-default.conf
+RUN a2enmod rewrite
+
+# Establecer el directorio de trabajo en /var/www/html
 WORKDIR /var/www/html
+
+# Copiar el código de Laravel al contenedor
 COPY . .
 
-# Instalar dependencias de Laravel
+# Instalar las dependencias de Laravel con Composer
 RUN composer install --no-dev --optimize-autoloader
-RUN npm install 
 
+# Copiar y instalar dependencias de Node.js y Vue.js
+WORKDIR /var/www/html/frontend
+RUN npm install
+RUN npm run build
 
-# Asignar permisos a storage y bootstrap/cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Exponer el puerto
+# Exponer el puerto 80
 EXPOSE 80
+
+# Iniciar Apache en primer plano
+CMD ["apache2-foreground"]
