@@ -37,8 +37,15 @@ const showingNavigationDropdown = ref(false);
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
                                 >
-                                    Dashboard
+                                    Estilo Carrusel 
                                 </NavLink>
+                                <NavLink
+                                    :href="route('create.img')"
+                                    :active="route().current('create.img')"
+                                >
+                                    Imaganes
+                                </NavLink>
+                               
                             </div>
                         </div>
 
@@ -74,14 +81,14 @@ const showingNavigationDropdown = ref(false);
                                         <DropdownLink
                                             :href="route('profile.edit')"
                                         >
-                                            Profile
+                                            Perfil
                                         </DropdownLink>
                                         <DropdownLink
                                             :href="route('logout')"
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            Salir
                                         </DropdownLink>
                                     </template>
                                 </Dropdown>
