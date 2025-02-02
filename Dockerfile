@@ -15,9 +15,7 @@ RUN apt-get update && apt-get install -y \
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Configuración de Apache
-COPY ./config/vhost.conf /etc/apache2/sites-available/000-default.conf
-RUN a2enmod rewrite
+
 
 # Establecer el directorio de trabajo en /var/www/html
 WORKDIR /var/www/html
