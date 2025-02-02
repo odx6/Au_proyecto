@@ -1,38 +1,39 @@
-# Imagen base de PHP con Apache
-FROM php:8.1-apache
+# Usar la imagen oficial de PHP
+FROM php:8.2-fpm
 
-# Instalar dependencias necesarias
+# Instalar dependencias de Laravel
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    zip \
     git \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd \
-    && docker-php-ext-install pdo pdo_mysql
+    unzip \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+
+# Instalar Node.js y npm
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Establecer el directorio de trabajo
+WORKDIR /var/www
 
-
-# Establecer el directorio de trabajo en /var/www/html
-WORKDIR /var/www/html
-
-# Copiar el código de Laravel al contenedor
+# Copiar el código de la aplicación Laravel
 COPY . .
 
-# Instalar las dependencias de Laravel con Composer
+# Instalar dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# Copiar y instalar dependencias de Node.js y Vue.js
-WORKDIR /var/www/html/frontend
+# Instalar dependencias de Node.js (Vue.js)
 RUN npm install
-RUN npm run build
 
-# Exponer el puerto 80
-EXPOSE 80
+# Exponer puertos (Laravel en 9000, MySQL en 3306)
+EXPOSE 9000
+EXPOSE 3306
 
-# Iniciar Apache en primer plano
-CMD ["apache2-foreground"]
+# Comando por defecto
+CMD ["php-fpm"]
