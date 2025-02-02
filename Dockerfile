@@ -1,5 +1,5 @@
-# Usar la imagen oficial de PHP
-FROM php:8.2-fpm
+# Usar la imagen oficial de PHP con Apache
+FROM php:8.2-apache
 
 # Instalar dependencias de Laravel
 RUN apt-get update && apt-get install -y \
@@ -31,9 +31,14 @@ RUN composer install --no-dev --optimize-autoloader
 # Instalar dependencias de Node.js (Vue.js)
 RUN npm install
 
-# Exponer puertos (Laravel en 9000, MySQL en 3306)
-EXPOSE 9000
+# Habilitar mod_rewrite para Apache (para Laravel)
+RUN a2enmod rewrite
 
+# Configurar el directorio de trabajo de Apache
+RUN chown -R www-data:www-data /var/www
+
+# Exponer puertos (Apache usa el puerto 80)
+EXPOSE 80
 
 # Comando por defecto
-CMD ["php-fpm"]
+CMD ["apache2-foreground"]
