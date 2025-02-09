@@ -26,7 +26,14 @@ const Pictures = Array.from({ length: 10 }, (_, index) => ({
   id: index + 1,
   path: `https://picsum.photos/800/600?random=${index + 1}`,
 }));
-const carouselImages = computed(() => (props.Images.length ?props.Images : Pictures));
+const carouselImages = computed(() =>
+  props.Images.length
+    ? props.Images.map((image) => ({
+        id: image.id,
+        path: image.path.startsWith("http") ? image.path : `/storage/${image.path}`,
+      }))
+    : Pictures
+);
 </script>
 
 <template>

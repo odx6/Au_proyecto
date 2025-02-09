@@ -19,7 +19,14 @@ const props=defineProps({
   },
   
 });
-const carouselImages = computed(() => (props.Images.length ?props.Images : Pictures));
+const carouselImages = computed(() =>
+  props.Images.length
+    ? props.Images.map((image) => ({
+        id: image.id,
+        path: image.path.startsWith("http") ? image.path : `/storage/${image.path}`,
+      }))
+    : Pictures
+);
 /*
 const config = {
   height: 200,
