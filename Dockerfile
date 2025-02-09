@@ -1,44 +1,43 @@
-# Usar la imagen oficial de PHP con Apache
-FROM php:8.2-apache
+# Set the base image for subsequent instructions
+FROM php:8.2-fpm
 
-# Instalar dependencias de Laravel
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    curl \
+    build-essential \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
     zip \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+    curl \
+    unzip \
+    git \
+    libzip-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev && \
+    docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Instalar Node.js y npm
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar Composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Establecer el directorio de trabajo
+# Set working directory
 WORKDIR /var/www
 
-# Copiar el código de la aplicación Laravel
-COPY . .
+# Remove default server definition
+RUN rm -rf /var/www/html
 
-# Instalar dependencias de Laravel
-RUN composer install --no-dev --optimize-autoloader
+# Copy existing application directory contents
+COPY . /var/www
 
-# Instalar dependencias de Node.js (Vue.js)
-RUN npm install
+# Copy existing application directory permissions
+COPY --chown=www-data:www-data . /var/www
 
-# Habilitar mod_rewrite para Apache (para Laravel)
-RUN a2enmod rewrite
+# Change current user to www
+USER www-data
 
-# Configurar el directorio de trabajo de Apache
-RUN chown -R www-data:www-data /var/www
-
-# Exponer puertos (Apache usa el puerto 80)
-EXPOSE 80
-
-# Comando por defecto
-CMD ["apache2-foreground"]
+# Expose port 9000 and start php-fpm server
+EXPOSE 9000
+CMD ["php-fpm"]
