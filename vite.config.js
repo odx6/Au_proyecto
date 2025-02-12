@@ -3,13 +3,6 @@ import laravel from "laravel-vite-plugin";
 import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
-    server: {
-        hmr: {
-            host: "localhost",
-        },
-        port: 3000,
-        host: true,
-    },
     plugins: [
         vue(),
         laravel({
@@ -17,4 +10,15 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        outDir: "public/build",
+        emptyOutDir: true,
+        sourcemap: false, // Disable source maps for security
+        minify: "terser", // Minify JS & CSS
+        rollupOptions: {
+            output: {
+                manualChunks: undefined, // Optimize chunk splitting
+            },
+        },
+    },
 });
