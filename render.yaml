@@ -1,83 +1,65 @@
 services:
   - type: web
-    name: my-laravel-app
+    name: laravel-app
     env: docker
-    build:
-      dockerfilePath: Dockerfile
-      context: .
-    image: my-laravel-app
-    containerName: my-laravel-app
-    restartPolicy: unless-stopped
+    dockerfilePath: ./Dockerfile
     workingDirectory: /var/www
-    volumes:
-      - ./:/var/www
-      - ./.env:/var/www/.env
-    environmentVariables:
+    autoDeploy: true
+    envVars:
       - key: APP_ENV
         value: local
-    ports:
-      - 8000:80
-    network:
-      name: app-network
+    volumes:
+      - name: laravel-env
+        mountPath: /var/www/.env
+    healthCheckPath: /health
 
   - type: web
-    name: my-nginx
+    name: nginx
     env: docker
-    image: nginx:alpine
-    containerName: my-nginx
+    image:
+      url: nginx:alpine
     ports:
-      - 8000:80
+      - 8000
     volumes:
-      - ./:/var/www
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - name: laravel-src
+        mountPath: /var/www
+      - name: nginx-conf
+        mountPath: /etc/nginx/conf.d/default.conf
     dependsOn:
-      - my-laravel-app
-      - my-mysql
-    network:
-      name: app-network
+      - laravel-app
+      - mysql-db
 
   - type: web
-    name: my-laravel-node
+    name: laravel-node
     env: docker
-    build:
-      dockerfilePath: Dockerfile.node
-      context: .
-    image: my-laravel-node
-    containerName: my-laravel-node
+    dockerfilePath: ./Dockerfile.node
+    platform: linux/arm64/v8
     ports:
-      - 3000:3000
-    restartPolicy: unless-stopped
-    workingDirectory: /var/www
+      - 3000
     volumes:
-      - ./:/var/www
-      - /var/www/node_modules
-    network:
-      name: app-network
+      - name: laravel-src
+        mountPath: /var/www
+      - name: node-modules
+        mountPath: /var/www/node_modules
+    autoDeploy: true
 
-  - type: database
-    name: my-mysql
+  - type: pserv
+    name: mysql-db
     env: docker
-    image: mysql:8.0
-    containerName: my-mysql
-    restartPolicy: unless-stopped
-    environmentVariables:
+    image:
+      url: mysql:8.0
+    platform: linux/x86_64
+    envVars:
       - key: MYSQL_DATABASE
         value: ${DB_DATABASE}
       - key: MYSQL_ROOT_PASSWORD
         value: ${DB_PASSWORD}
-      - key: MYSQL_PASSWORD
-        value: ${DB_PASSWORD}
       - key: MYSQL_USER
         value: ${DB_USERNAME}
-    volumes:
-      - dbdata:/var/lib/mysql
-    ports:
-      - 3306:3306
-    network:
-      name: app-network
+      - key: MYSQL_PASSWORD
+        value: ${DB_PASSWORD}
+    disk:
+      name: db-data
+      mountPath: /var/lib/mysql
+      sizeGB: 5
 
-networks:
-  - name: app-network
-
-volumes:
-  - name: dbdata
