@@ -1,65 +1,29 @@
-# ================================
-# Base: PHP con Node.js y Nginx
-# ================================
-FROM php:8.2-fpm
-
-# Instalamos dependencias del sistema
-RUN apt-get update && apt-get install -y \
+FROM richarvey/nginx-php-fpm:3.1.6
+# Install Node.js (for example, Node 18.x)
+RUN apk update && apk add --no-cache \
     curl \
-    zip \
-    unzip \
-    git \
-    nginx \
-    supervisor \
-    libpq-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    bash \
+    ca-certificates \
+    nodejs \
+    npm 
 
-# ================================
-# Instalamos Composer
-# ================================
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# ================================
-# Instalamos Node.js y npm
-# ================================
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g npm@latest
-
-# ================================
-# Configuración de Laravel
-# ================================
-WORKDIR /var/www/html
+# Verificar que Node.js y npm se instalaron correctamente
+RUN node -v && npm -v
 COPY . .
 
-# Instalamos dependencias de PHP y Node.js
-RUN composer install --no-dev --no-interaction --optimize-autoloader && \
-    npm install && \
-    npm run build && \
-    php artisan optimize && \
-    php artisan storage:link
+# Image config
+ENV SKIP_COMPOSER 1
+ENV WEBROOT /var/www/html/public
+ENV PHP_ERRORS_STDERR 1
+ENV RUN_SCRIPTS 1
+ENV REAL_IP_HEADER 1
 
-# ================================
-# Configuración de Nginx
-# ================================
-COPY ./nginx.conf /etc/nginx/nginx.conf
-RUN mkdir -p /var/www/html/storage && chown -R www-data:www-data /var/www/html
+# Laravel config
+ENV APP_ENV production
+ENV APP_DEBUG false
+ENV LOG_CHANNEL stderr
 
-# ================================
-# Configuración de Supervisor
-# ================================
-COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Allow composer to run as root
+ENV COMPOSER_ALLOW_SUPERUSER 1
 
-# ================================
-# Permisos
-# ================================
-RUN chown -R www-data:www-data /var/www/html
-
-# ================================
-# Exponemos puertos y ejecutamos servicios
-# ================================
-EXPOSE 80
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/start.sh"]
