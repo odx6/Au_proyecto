@@ -1,43 +1,65 @@
-# Set the base image for subsequent instructions
+# ================================
+# Base: PHP con Node.js y Nginx
+# ================================
 FROM php:8.2-fpm
 
-# Install dependencies
+# Instalamos dependencias del sistema
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
     curl \
+    zip \
     unzip \
     git \
+    nginx \
+    supervisor \
+    libpq-dev \
+    libonig-dev \
+    libxml2-dev \
     libzip-dev \
-    libfreetype6-dev \
-    libjpeg62-turbo-dev \
-    libpng-dev && \
-    docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# ================================
+# Instalamos Composer
+# ================================
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# ================================
+# Instalamos Node.js y npm
+# ================================
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g npm@latest
 
-# Set working directory
-WORKDIR /var/www
+# ================================
+# Configuración de Laravel
+# ================================
+WORKDIR /var/www/html
+COPY . .
 
-# Remove default server definition
-RUN rm -rf /var/www/html
+# Instalamos dependencias de PHP y Node.js
+RUN composer install --no-dev --no-interaction --optimize-autoloader && \
+    npm install && \
+    npm run build && \
+    php artisan optimize && \
+    php artisan storage:link
 
-# Copy existing application directory contents
-COPY . /var/www
+# ================================
+# Configuración de Nginx
+# ================================
+COPY ./nginx.conf /etc/nginx/nginx.conf
+RUN mkdir -p /var/www/html/storage && chown -R www-data:www-data /var/www/html
 
-# Copy existing application directory permissions
-COPY --chown=www-data:www-data . /var/www
+# ================================
+# Configuración de Supervisor
+# ================================
+COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Change current user to www
-USER www-data
+# ================================
+# Permisos
+# ================================
+RUN chown -R www-data:www-data /var/www/html
 
-# Expose port 9000 and start php-fpm server
-EXPOSE 9000
-CMD ["php-fpm"]
+# ================================
+# Exponemos puertos y ejecutamos servicios
+# ================================
+EXPOSE 80
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
